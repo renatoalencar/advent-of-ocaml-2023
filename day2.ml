@@ -52,13 +52,31 @@ let parse s =
 
   (game_id, rounds)
 
-let match_constraints { red; green; blue } (game_id, rounds) =
-  let match' = function
-    | Red count -> count <= red
-    | Green count -> count <= green
-    | Blue count -> count <= blue
+let find_red = function
+  | Red count -> Some count
+  | _ -> None
+
+let find_blue = function
+  | Blue count -> Some count
+  | _ -> None
+
+let find_green = function
+  | Green count -> Some count
+  | _ -> None
+
+let find_minimum rounds =
+  let aux f =
+    rounds
+    |> List.filter_map (List.find_map f)
+    |> List.fold_left Int.max 0
   in
-  List.for_all (List.for_all match') rounds
+  let red = aux find_red in
+  let blue = aux find_blue in
+  let green = aux find_green in
+  { red; green; blue }
+
+let power { red; green; blue } =
+  red * green * blue
 
 let rec read_lines () =
   try 
@@ -66,16 +84,11 @@ let rec read_lines () =
     line :: read_lines ()
   with End_of_file -> []
 
-
-let constraints =
-  { red = 12; green = 13; blue = 14}
-
 let () =
   let games = List.map parse @@ read_lines () in
   let sum =
     games
-    |> List.filter (match_constraints constraints)
-    |> List.map (fun (game_id, _) -> game_id)
+    |> List.map (fun (_, rounds) -> power @@ find_minimum rounds)
     |> List.fold_left (+) 0
   in
   print_int sum
